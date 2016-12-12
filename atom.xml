@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>databait</title>
+  
+  <link href="/atom.xml" rel="self"/>
+  
+  <link href="https://databait.github.io/"/>
+  <updated>2016-12-11T19:23:10.004Z</updated>
+  <id>https://databait.github.io/</id>
+  
+  <author>
+    <name>databait@gmail.com</name>
+    
+  </author>
+  
+  <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>The Kelly Criterion in Applied Portfolio Selection</title>
+    <link href="https://databait.github.io/2016/12/10/The-Kelly-Criterion-in-Applied-Portfolio-Selection/"/>
+    <id>https://databait.github.io/2016/12/10/The-Kelly-Criterion-in-Applied-Portfolio-Selection/</id>
+    <published>2016-12-10T22:52:39.000Z</published>
+    <updated>2016-12-11T19:23:10.004Z</updated>
+    
+    <summary type="html">
+    
+      &lt;h3 id=&quot;The-Kelly-Criterion&quot;&gt;&lt;a href=&quot;#The-Kelly-Criterion&quot; class=&quot;headerlink&quot; title=&quot;The Kelly Criterion&quot;&gt;&lt;/a&gt;The Kelly Criterion&lt;/h3&gt;&lt;p&gt;&lt;a
+    
+    </summary>
+    
+    
+      <category term="R" scheme="https://databait.github.io/tags/R/"/>
+    
+      <category term="Finance" scheme="https://databait.github.io/tags/Finance/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Webscraping with R using a Raspberry Pi</title>
+    <link href="https://databait.github.io/2016/12/08/Webscraping-with-R-using-a-Raspberry-Pi/"/>
+    <id>https://databait.github.io/2016/12/08/Webscraping-with-R-using-a-Raspberry-Pi/</id>
+    <published>2016-12-08T01:08:08.000Z</published>
+    <updated>2016-12-11T13:35:11.423Z</updated>
+    
+    <summary type="html">
+    
+      &lt;h3 id=&quot;Setting-up-the-Raspberry-Pi&quot;&gt;&lt;a href=&quot;#Setting-up-the-Raspberry-Pi&quot; class=&quot;headerlink&quot; title=&quot;Setting up the Raspberry Pi&quot;&gt;&lt;/a&gt;Setti
+    
+    </summary>
+    
+    
+      <category term="R" scheme="https://databait.github.io/tags/R/"/>
+    
+      <category term="Raspberry Pi" scheme="https://databait.github.io/tags/Raspberry-Pi/"/>
+    
+  </entry>
+  
+</feed>
