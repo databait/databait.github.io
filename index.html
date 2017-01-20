@@ -71,6 +71,68 @@ ga('send', 'pageview');
       <div id="main" class="wrapper">
         <div id="primary" class="site-content"><div id="content" role="main">
   
+    <article id="post-The-Kelly-Criterion-in-Applied-Portfolio-Selection-Part-2" class="post-The-Kelly-Criterion-in-Applied-Portfolio-Selection-Part-2 post type-post status-publish format-standard hentry">
+    <!---->
+
+      <header class="entry-header">
+        
+        
+  
+    <h1 class="entry-title">
+      <a class="article-title" href="/2016/12/12/The-Kelly-Criterion-in-Applied-Portfolio-Selection-Part-2/">The Kelly Criterion in Applied Portfolio Selection - Part 2</a>
+    </h1>
+  
+
+        
+        
+      </header><!-- .entry-header -->
+
+    <div class="entry-content">
+      
+        <h3 id="Previous-blog-post-on-the-Kelly-Criterion"><a href="#Previous-blog-post-on-the-Kelly-Criterion" class="headerlink" title="Previous blog post on the Kelly Criterion"></a>Previous blog post on the Kelly Criterion</h3><p>As pointed out in a <a href="/2016/12/10/The-Kelly-Criterion-in-Applied-Portfolio-Selection/">previous blog post</a>, the Kelly Criterion is an interesting option to decide on position sizing in portfolio selection. While the previous post looked at single stocks, I will today show how to optimize position sizes for a portfolio with multiple stocks.</p>
+<h3 id="The-core-function"><a href="#The-core-function" class="headerlink" title="The core function"></a>The core function</h3><p>At the core of my portfolio optimization is this function:</p>
+<figure class="highlight r"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">opt_portfolio &lt;-<span class="keyword">function</span>(shares, dpf, maxshare) &#123;</div><div class="line">  </div><div class="line">  <span class="comment"># calculate portfolios return vector</span></div><div class="line">  exp_returns &lt;- dpf%*%shares</div><div class="line">  </div><div class="line">  obj = -sum(log(<span class="number">1</span>+exp_returns))</div><div class="line">  weight.penalty = <span class="number">1000</span>*(<span class="number">1</span>-sum(shares))^<span class="number">2</span></div><div class="line">  </div><div class="line">  <span class="comment"># max share penalty:</span></div><div class="line">  maxpen &lt;- sum(shares[shares&gt;maxshare])*<span class="number">1000</span></div><div class="line"></div><div class="line">  <span class="keyword">return</span>(obj + weight.penalty + maxpen)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>The function has three parameters. <code>shares</code> is the vector of shares (position size for each stock) that is going to be estimated by optimization. <code>dpf</code> is a matrix where each stock is a column and each line contains the daily stock price movements like e.g.: <code>diff(stock)/lag(stock)</code>. The <code>maxshare</code> option can be used to restrict the position size of a single stock to a maximum. </p>
+<p><code>exp_returns &lt;- dpf%*%shares</code> calculates the daily (or weekly) portfolio returns. <code>obj</code> is the Kelly Criterion. The higher the volatility, the larger values <code>obj</code> will take. We are going to minimize the function so low values, i.e. low volatility is preferred. The next line is a trick to restrict the optimizer to values that sum to 1 (100%). If the sum of all position sizes is 1, <code>weight.penalty</code> is 0 (the minimum possible value). Would the sum deviate from 1, the <code>weight.penalty</code> would quickly increase. The second penalty term is similar. If a position is sized above the maximum allowed share, the penalty scores. Finally the function returns a value which the optimizer will try to minimize.</p>
+<h3 id="The-wrapper-function"><a href="#The-wrapper-function" class="headerlink" title="The wrapper function"></a>The wrapper function</h3><p>Now to feed stock data into this function I wrote a wrapper function that prepares the matrix of returns and calls <code>optim()</code>.</p>
+<figure class="highlight r"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">library</span>(quantmod)</div><div class="line"><span class="keyword">library</span>(dplyr)</div><div class="line"></div><div class="line">opt_portfolio_wrapper &lt;- <span class="keyword">function</span>(stocks,r=rep(<span class="number">0.03</span>,length(stocks)),maxshare=<span class="number">1</span>,daily=<span class="literal">FALSE</span>,short=<span class="literal">FALSE</span>) &#123;</div><div class="line">  </div><div class="line">  <span class="comment"># test which stocks are already in workspace, else download data</span></div><div class="line">  <span class="keyword">for</span>(stock <span class="keyword">in</span> stocks) &#123;</div><div class="line">    <span class="keyword">if</span>(!exists(stock)) getSymbols(stock,from=<span class="string">"1970-01-01"</span>,env=parent.frame(<span class="number">2</span>))</div><div class="line">  &#125;</div><div class="line">  </div><div class="line">  <span class="comment"># transform return vector from yearly to daily or weekly</span></div><div class="line">  <span class="keyword">if</span>(daily==<span class="literal">TRUE</span>) &#123;</div><div class="line">    r &lt;- (<span class="number">1</span>+r)^(<span class="number">1</span>/<span class="number">250</span>)-<span class="number">1</span></div><div class="line">  &#125; <span class="keyword">else</span> &#123;</div><div class="line">    r &lt;- (<span class="number">1</span>+r)^(<span class="number">1</span>/<span class="number">52</span>)-<span class="number">1</span></div><div class="line">  &#125;</div><div class="line">  </div><div class="line">  portfolio &lt;- <span class="literal">NULL</span></div><div class="line">  <span class="keyword">for</span>(stock <span class="keyword">in</span> stocks) &#123;</div><div class="line">    <span class="keyword">if</span>(daily) assign(stock,get(stock)[,<span class="number">6</span>])</div><div class="line">    <span class="keyword">if</span>(!daily) assign(stock,to.weekly(get(stock))[,<span class="number">6</span>])</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="comment"># merge all stocks together</span></div><div class="line">  portfolio &lt;- Reduce(<span class="keyword">function</span>(<span class="keyword">...</span>) merge(<span class="keyword">...</span>, all=<span class="literal">TRUE</span>), mget(stocks))</div><div class="line">  </div><div class="line">  <span class="comment"># build returns by diff()/lag()</span></div><div class="line">  d.portfolio &lt;- data.frame(na.omit(diff(portfolio)/stats::lag(portfolio)))</div><div class="line">  </div><div class="line">  <span class="comment"># center around the mean to eliminate past performance as an information for portfolio selection</span></div><div class="line">  d.portfolio.future &lt;- scale(d.portfolio, scale=<span class="literal">F</span>)</div><div class="line">  </div><div class="line">  <span class="comment"># add the (personally) expected return for each stock</span></div><div class="line">  <span class="keyword">for</span>(i <span class="keyword">in</span> <span class="number">1</span>:ncol(d.portfolio.future)) &#123;</div><div class="line">    d.portfolio.future[,i] &lt;- d.portfolio.future[,i] + r[i]</div><div class="line">  &#125;</div><div class="line">  </div><div class="line">  <span class="comment"># define lower und upper bounds for the parameters. 0 to 1 or -1 to 1 if short positions are allowed</span></div><div class="line">  lower &lt;- rep(ifelse(short==<span class="literal">TRUE</span>,-<span class="number">1</span>,<span class="number">0</span>),length(stocks))</div><div class="line">  upper &lt;- rep(<span class="number">1</span>,length(stocks))</div><div class="line">  </div><div class="line">  <span class="comment"># starting values for optimizer</span></div><div class="line">  start &lt;- rep(<span class="number">1</span>/length(stocks),length(stocks))</div><div class="line">  </div><div class="line">  res &lt;- optim(start, opt_portfolio, dpf=d.portfolio.future, maxshare=maxshare, method=<span class="string">"Nelder-Mead"</span>)</div><div class="line">  </div><div class="line">  Portfolio &lt;- data.frame(<span class="string">"Share"</span>=res$par,<span class="string">"Stock"</span>=stocks) %&gt;% arrange(desc(Share))</div><div class="line">  <span class="keyword">return</span>(Portfolio)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>Most of the function is commented between the lines. I introduced two options: <code>daily</code> and <code>short</code>. The default values are, that short positions are not allowed and the returns are calculated on a weekly, not daily basis. One thing thats important for me is, that I dont use the stock returns as they are but I center them around the mean return that I expect. If I would not do this, the algorithm would always pick the historically best performing stock(s). However past performance is not a good predictor of future performance and one has to do his homework and build own (and realistic) expectations.</p>
+<h3 id="Testing"><a href="#Testing" class="headerlink" title="Testing"></a>Testing</h3><p>To test the function I select some random stocks (not a recommendation to trade these stocks).</p>
+<figure class="highlight r"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">rstocks &lt;- c(<span class="string">"AAPL"</span>,<span class="string">"GOOG"</span>,<span class="string">"AMZN"</span>,<span class="string">"GIS"</span>)</div><div class="line"></div><div class="line">opt_portfolio_wrapper(rstocks)</div><div class="line"></div><div class="line"><span class="comment">#        Share Stock</span></div><div class="line"><span class="comment"># 1 0.80851815   GIS</span></div><div class="line"><span class="comment"># 2 0.09979312  AAPL</span></div><div class="line"><span class="comment"># 3 0.06343397  GOOG</span></div><div class="line"><span class="comment"># 4 0.02829082  AMZN</span></div></pre></td></tr></table></figure>
+<p>This tells the following story: Assuming all stocks have the same expected yearly return of 3%, the long term growth rate of wealth (Kelly Criterion) is achieved by investing in the stock with a lowest volatility (here GIS). At the same time this is a hint, that the assumption that all returns are to be expected as equal is too strong. One could now play with the function to find out how high the expected return of a risky stock has to be, to be included into an existing portfolio. </p>
+<h3 id="Summary"><a href="#Summary" class="headerlink" title="Summary"></a>Summary</h3><p>I personally use this tool as a rough orientation, how stocks from my watchlist would contribute to the risk-return-profile of my portfolio. I usually use the <code>maxshare</code> option and rather “flat” and moderate return expectations, because the Kelly Criterion highly favors stocks with better return expectations. E.g. if I add 1% additional expected return for GOOG, the numbers change drastically:</p>
+<figure class="highlight r"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">opt_portfolio_wrapper(rstocks, r=c(<span class="number">0.03</span>,<span class="number">0.04</span>,<span class="number">0.03</span>,<span class="number">0.03</span>))</div><div class="line"></div><div class="line"><span class="comment">#          Share Stock</span></div><div class="line"><span class="comment"># 1  0.749115293   GIS</span></div><div class="line"><span class="comment"># 2  0.200639803  GOOG</span></div><div class="line"><span class="comment"># 3  0.051410711  AAPL</span></div><div class="line"><span class="comment"># 4 -0.001125542  AMZN</span></div></pre></td></tr></table></figure>
+<p>If find the tool to be useful because it keeps me from overbetting on very volatile stocks and gives hints, if and when risky stocks are worth to bet on. </p>
+<h3 id="Other"><a href="#Other" class="headerlink" title="Other"></a>Other</h3><p>There are a few additional points worth mentioning:</p>
+<ul>
+<li>while <code>opt_portfolio_wrapper()</code> gives the shares to achieve the Kelly-optimal portfolio selection, it does not tell, how much one should bet on the whole portfolio. Approximately this be calculated by dividing the expected portfolio return by the annualized variance. One could also adapt the <code>kelly()</code> function from the <a href="/2016/12/10/The-Kelly-Criterion-in-Applied-Portfolio-Selection/">previous blog post</a> to get a number that incorporates the fact, that the return distribution is fat-tailed and non-normal.</li>
+<li>I excluded some of the options that my function originally had for the sake of readability. Options that I found interesting are:<ul><li>transaction costs<br></li><li>“fixed shares” (e.g. my pension account is invested in index funds and bonds. When picking stocks, I might want to incorporate the fact, that I am already exposed to these securities)<br></li><li>a <code>from</code> option for <code>getSymbols()</code> if the historic returns should be restricted to a certain range</li></ul></li>
+</ul>
+
+      
+    </div><!-- .entry-content -->
+
+    <footer class="entry-meta">
+    <a href="/2016/12/12/The-Kelly-Criterion-in-Applied-Portfolio-Selection-Part-2/">
+    <time datetime="2016-12-12T12:34:14.000Z" class="entry-date">
+        2016-12-12
+    </time>
+</a>
+    
+    
+  <span class="article-delim">&#8226;</span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Finance/">Finance</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/R/">R</a></li></ul>
+
+    </footer>
+</article>
+
+
+
+
+
+
+
+  
     <article id="post-The-Kelly-Criterion-in-Applied-Portfolio-Selection" class="post-The-Kelly-Criterion-in-Applied-Portfolio-Selection post type-post status-publish format-standard hentry">
     <!---->
 
@@ -236,6 +298,10 @@ ga('send', 'pageview');
       <ul>
         
           <li>
+            <a href="/2016/12/12/The-Kelly-Criterion-in-Applied-Portfolio-Selection-Part-2/">The Kelly Criterion in Applied Portfolio Selection - Part 2</a>
+          </li>
+        
+          <li>
             <a href="/2016/12/10/The-Kelly-Criterion-in-Applied-Portfolio-Selection/">The Kelly Criterion in Applied Portfolio Selection</a>
           </li>
         
@@ -252,7 +318,7 @@ ga('send', 'pageview');
   <aside class="widget">
     <h3 class="widget-title">Tags</h3>
     <div class="widget-content">
-      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Finance/">Finance</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/R/">R</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Raspberry-Pi/">Raspberry Pi</a><span class="tag-list-count">1</span></li></ul>
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Finance/">Finance</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/R/">R</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Raspberry-Pi/">Raspberry Pi</a><span class="tag-list-count">1</span></li></ul>
     </div>
   </aside>
 
@@ -261,7 +327,7 @@ ga('send', 'pageview');
   <aside class="widget">
     <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget-content tagcloud">
-      <a href="/tags/Finance/" style="font-size: 10px;">Finance</a> <a href="/tags/R/" style="font-size: 20px;">R</a> <a href="/tags/Raspberry-Pi/" style="font-size: 10px;">Raspberry Pi</a>
+      <a href="/tags/Finance/" style="font-size: 15px;">Finance</a> <a href="/tags/R/" style="font-size: 20px;">R</a> <a href="/tags/Raspberry-Pi/" style="font-size: 10px;">Raspberry Pi</a>
     </div>
   </aside>
 
@@ -280,7 +346,7 @@ ga('send', 'pageview');
 </div>
       </div>
       <footer id="colophon" role="contentinfo">
-    <p>&copy; 2016 databait@gmail.com
+    <p>&copy; 2017 databait@gmail.com
     All rights reserved.</p>
     <p>Powered by <a href="http://hexo.io/" target="_blank">Hexo</a></p>
 </footer>

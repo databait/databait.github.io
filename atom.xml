@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://databait.github.io/"/>
-  <updated>2016-12-11T19:23:10.004Z</updated>
+  <updated>2016-12-12T14:27:27.776Z</updated>
   <id>https://databait.github.io/</id>
   
   <author>
@@ -14,6 +14,26 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>The Kelly Criterion in Applied Portfolio Selection - Part 2</title>
+    <link href="https://databait.github.io/2016/12/12/The-Kelly-Criterion-in-Applied-Portfolio-Selection-Part-2/"/>
+    <id>https://databait.github.io/2016/12/12/The-Kelly-Criterion-in-Applied-Portfolio-Selection-Part-2/</id>
+    <published>2016-12-12T12:34:14.000Z</published>
+    <updated>2016-12-12T14:27:27.776Z</updated>
+    
+    <summary type="html">
+    
+      &lt;h3 id=&quot;Previous-blog-post-on-the-Kelly-Criterion&quot;&gt;&lt;a href=&quot;#Previous-blog-post-on-the-Kelly-Criterion&quot; class=&quot;headerlink&quot; title=&quot;Previous b
+    
+    </summary>
+    
+    
+      <category term="R" scheme="https://databait.github.io/tags/R/"/>
+    
+      <category term="Finance" scheme="https://databait.github.io/tags/Finance/"/>
+    
+  </entry>
   
   <entry>
     <title>The Kelly Criterion in Applied Portfolio Selection</title>
